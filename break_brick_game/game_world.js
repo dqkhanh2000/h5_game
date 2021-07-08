@@ -5,7 +5,7 @@ window.onload = () => {
     canvas = document.getElementById("canvas");
     canvas.width = window.innerWidth * 0.7
     canvas.height = window.innerHeight * 0.7
-    gameWorld = new GameWorld(canvas,2, 5);
+    gameWorld = new GameWorld(canvas, 5, 5);
     window.requestAnimationFrame((timeStamp) => gameWorld.gameLoop(timeStamp));
 };
 
@@ -15,7 +15,7 @@ class GameWorld {
         this.context = canvas.getContext("2d");
 
         this.gameBoardWidth = this.canvas.width;
-        this.gameBoardHeight = this.canvas.height * 0.85;
+        this.gameBoardHeight = this.canvas.height -30;
         this.bubbleSize = bubbleSize;
         this.secondPassed = 0;
         this.oldTimestamp = 0;
@@ -82,7 +82,7 @@ class GameWorld {
         
 
         if(!this.bubble || !this.slider){
-            this.speed = brickWidth * 2
+            this.speed = 200
             this.bubble = new Bubble(
                 this.context,
                 this.gameBoardWidth / 2,
@@ -95,7 +95,7 @@ class GameWorld {
                 this.context,
                 this.gameBoardWidth / 2 - brickWidth / 2,
                 this.gameBoardHeight - this.bubble.radius * 2,
-                this.bubble.radius * 12,
+                this.gameBoardWidth * 0.2,
                 this.bubble.radius * 2
             );
     
@@ -202,7 +202,7 @@ class GameWorld {
             } else {
                 // alert("Game over");
 
-                this.bubble.y -= this.bubble.radius;
+                this.bubble.y += this.bubble.radius;
                 this.bubble.vx = 0;
                 this.bubble.vy = 0;
                 this.gameOver = true;
@@ -230,6 +230,7 @@ class GameWorld {
 
     drawGameInfo() {
         let x = 0;
+        let textSize = 12;
         let y = this.gameBoardHeight + 2;
         let width = this.gameBoardWidth;
         this.context.beginPath();
@@ -241,10 +242,10 @@ class GameWorld {
 
         this.context.textAlign = "left";
 
-        let textSize = 12;
+        
         this.context.fillStyle = "#3F7CF6";
         this.context.font = `${textSize}px Arial`;
-        this.context.fillText(`Speed: ${this.speed}`, x + 10, y + textSize + 5);
+        this.context.fillText(`Speed: ${parseInt(this.speed)}`, x + 10, y + textSize + 5);
 
         this.context.fillText(
             `Score: ${this.score}`,
