@@ -3,7 +3,9 @@ let gameWorld;
 window.onload = () => {
     "use district";
     canvas = document.getElementById("canvas");
-    gameWorld = new GameWorld(canvas, 3, 5);
+    canvas.width = window.innerWidth * 0.7
+    canvas.height = window.innerHeight * 0.7
+    gameWorld = new GameWorld(canvas,2, 5);
     window.requestAnimationFrame((timeStamp) => gameWorld.gameLoop(timeStamp));
 };
 
@@ -25,10 +27,10 @@ class GameWorld {
         this.numRow = numRow;
         this.run = false;
 
-        this.init(numRow, numColumn, speed);
+        this.init(numRow, numColumn);
     }
 
-    init(numRow, numColumn, speed) {
+    init(numRow, numColumn) {
         window.addEventListener("touchmove", (e) => {
             if (
                 e.targetTouches[0].pageX <
@@ -57,6 +59,8 @@ class GameWorld {
 
         this.totalBrick = numColumn * numRow;
 
+        
+
         //init brick
         let marginHorizontal = numColumn * 5;
         let brickWidth = this.gameBoardWidth / numColumn - marginHorizontal;
@@ -75,40 +79,51 @@ class GameWorld {
             y += brickHeight + numRow * 2;
         }
 
-        this.slider = new Slider(
-            this.context,
-            this.gameBoardWidth / 2 - brickWidth / 2,
-            this.gameBoardHeight - brickHeight,
-            brickWidth * 2,
-            brickHeight
-        );
+        
 
-        this.bubble = new Bubble(
-            this.context,
-            this.gameBoardWidth / 2,
-            this.gameBoardHeight - this.bubbleSize - brickHeight / 2,
-            -speed,
-            -speed,
-            this.bubbleSize / 2
-        );
+        if(!this.bubble || !this.slider){
+            this.speed = brickWidth * 2
+            this.bubble = new Bubble(
+                this.context,
+                this.gameBoardWidth / 2,
+                this.gameBoardHeight - this.bubbleSize - brickHeight / 2,
+                -this.speed,
+                -this.speed,
+                this.gameBoardHeight * 0.02
+            );
+            this.slider = new Slider(
+                this.context,
+                this.gameBoardWidth / 2 - brickWidth / 2,
+                this.gameBoardHeight - this.bubble.radius * 2,
+                this.bubble.radius * 12,
+                this.bubble.radius * 2
+            );
+    
+            
+        }
         this.start();
     }
 
     gameLoop(timeStamp) {
+
+        let secondsPassed = (timeStamp - this.oldTimeStamp) / 1000;
+        this.oldTimeStamp = timeStamp;
+
         if (this.listBrick.length == 0) {
-            this.speed += 50;
+            this.speed += 100;
             this.numRow++;
             this.numColumn++;
-            this.init(this.numRow, this.numColumn, this.speed);
+            this.init(this.numRow, this.numColumn);
             this.run = false;
+            this.bubble.x = this.gameBoardWidth / 2
+            this.bubble.y = this.gameBoardHeight / 2
             this.start();
         }
 
         if (this.gameOver) {
             this.drawButton("Game OVER");
         } else if (this.run) {
-            let secondsPassed = (timeStamp - this.oldTimeStamp) / 1000;
-            this.oldTimeStamp = timeStamp;
+            
             this.detectCollisions();
             this.bubble.update(secondsPassed);
             this.draw();
@@ -239,7 +254,7 @@ class GameWorld {
     }
 
     drawButton(text) {
-        this.clear();
+        // this.clear();
         let x = this.gameBoardWidth / 6;
         let y = this.gameBoardHeight / 4;
         let width = this.gameBoardWidth * 0.67;
@@ -256,13 +271,11 @@ class GameWorld {
     start() {
         let i = 3;
         let interval = setInterval(() => {
-            this.drawButton(`Start in ${i--}`);
+            this.drawButton(`Start in ${i--}...`);
         }, 1000);
 
         setTimeout(() => {
             clearInterval(interval);
-            this.bubble.x = this.gameBoardWidth / 2
-            this.bubble.y = this.gameBoardHeight - this.bubbleSize - this.slider.height / 2
             this.run = true;
             this.timeStamp = 0;
         }, 3500);
