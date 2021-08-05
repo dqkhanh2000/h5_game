@@ -1,0 +1,19 @@
+{
+  "name": "nodejs_enviroment",
+  "version": "1.0.0",
+  "description": "Dev Enviroment using NodeJS",
+  "main": "app.js",
+  "scripts": {
+    "start": "nodemon app.js"
+  },
+  "author": "khanh",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "express": "^4.17.1",
+    "pixi": "^0.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.12"
+  }
+}
