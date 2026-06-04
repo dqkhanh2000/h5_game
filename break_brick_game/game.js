@@ -8,20 +8,31 @@ window.onload = () => {
     canvas.width = window.innerWidth * 0.7;
     canvas.height = window.innerHeight * 0.7;
 
-    gameWorld = new GameWorld(canvas, 5, 5);
+    gameWorld = new Game(canvas, 5, 5);
     window.gameWorld = gameWorld;
     window.requestAnimationFrame((timeStamp) => gameWorld.gameLoop(timeStamp));
 };
 
-class GameWorld {
-    constructor(canvas, numRow, numColumn, bubbleSize = 10, speed = 200) {
+const BRICK_COLOR = "#0095DD";
+const SLIDER_COLOR = "#0095DD";
+const BUBBLE_COLOR = "#0095DD";
+const UI_COLOR = "#0095DD";
+const MESSAGE_COLOR = "#0095DD";
+const UI_SCORE_SIZE = 30;
+const BUBBLE_SIZE = 10;
+const START_SPEED = 200;
+const SPEED_INCREMENT = 50;
+const MAX_SPEED = 1000;
+
+class Game {
+    constructor(canvas, numRow, numColumn, bubbleSize = BUBBLE_SIZE) {
         this.canvas = canvas;
         this.context = canvas.getContext("2d");
 
         this.gameBoardWidth = this.canvas.width;
-        this.gameBoardHeight = this.canvas.height - 30;
+        this.gameBoardHeight = this.canvas.height - UI_SCORE_SIZE;
+        this.ui = new GameUI(this.context, this.gameBoardWidth, this.gameBoardHeight);
         this.bubbleSize = bubbleSize;
-        this.speed = speed;
 
         this.score = 0;
         this.numRow = numRow;
@@ -46,8 +57,7 @@ class GameWorld {
             this.context,
             this.gameBoardWidth / 2,
             this.gameBoardHeight / 2,
-            -this.speed,
-            -this.speed,
+            START_SPEED,
             bubbleRadius
         );
 
@@ -109,7 +119,7 @@ class GameWorld {
         this.oldTimeStamp = timeStamp;
 
         if (this.gameOver) {
-            this.drawButton("Game OVER");
+            this.showMessage("Game OVER");
         } else if (this.run) {
             this.update(secondsPassed);
             this.draw();
@@ -140,6 +150,7 @@ class GameWorld {
             if (brick.isTouchingBubble(this.bubble)) {
                 this.bubble.bounceY(this.bubble.vy > 0 ? -1 : 1);
                 this.score += 10;
+                this.bubble.speed = Math.min(this.bubble.speed + SPEED_INCREMENT, MAX_SPEED);
                 this.listBrick.splice(i--, 1);
             }
         }
@@ -160,13 +171,12 @@ class GameWorld {
     }
 
     nextLevel() {
-        this.speed += 100;
         this.numRow++;
         this.numColumn++;
         this.run = false;
 
         this.createBricks();
-        this.bubble.reset(this.gameBoardWidth / 2, this.gameBoardHeight / 2, this.speed);
+        this.bubble.reset(this.gameBoardWidth / 2, this.gameBoardHeight / 2);
         this.start();
     }
 
@@ -175,53 +185,23 @@ class GameWorld {
         this.listBrick.forEach((brick) => brick.draw());
         this.bubble.draw();
         this.slider.draw();
-        this.drawGameInfo();
+        this.ui.drawGameInfo(this.score, this.bubble.speed);
     }
 
-    drawGameInfo() {
-        let textSize = 12;
-        let y = this.gameBoardHeight + 2;
-
-        this.context.beginPath();
-        this.context.fillStyle = "#d8d8d8";
-        this.context.moveTo(0, y);
-        this.context.lineTo(this.gameBoardWidth, y);
-        this.context.lineWidth = 0.3;
-        this.context.stroke();
-
-        this.context.textAlign = "left";
-        this.context.fillStyle = "#3F7CF6";
-        this.context.font = `${textSize}px Arial`;
-        this.context.fillText(`Speed: ${parseInt(this.speed)}`, 10, y + textSize + 5);
-        this.context.fillText(`Score: ${this.score}`, this.gameBoardWidth - 65, y + textSize + 5);
-    }
-
-    drawButton(text) {
+    showMessage(text) {
         this.clear();
-
-        let x = this.gameBoardWidth / 6;
-        let y = this.gameBoardHeight / 4;
-        let width = this.gameBoardWidth * 0.67;
-        let height = this.gameBoardHeight * 0.6;
-
-        this.context.fillStyle = "#3AAFFD";
-        this.context.fillRect(x, y, width, height);
-
-        this.context.font = "20px Arial";
-        this.context.textAlign = "center";
-        this.context.fillStyle = "#ffffff";
-        this.context.fillText(text, x + width / 2, y + height / 2);
+        this.ui.drawMessage(text);
     }
 
     start() {
         let count = 3;
-        this.drawButton(`Start in ${count}...`);
+        this.showMessage(`Start in ${count}...`);
 
         let interval = setInterval(() => {
             count--;
 
             if (count >= 0) {
-                this.drawButton(`Start in ${count}s...`);
+                this.showMessage(`Start in ${count}s...`);
             }
             else {
                 clearInterval(interval);

@@ -1,9 +1,11 @@
 class Bubble extends GameObject {
-    constructor(context, x, y, vx, vy, radius, color = "#2427EF") {
-        super(context, x, y, vx, vy);
+
+    constructor(context, x, y, speed, radius, color = "#2427EF") {
+        super(context, x, y, 1, -1);
         this.radius = radius;
         this.color = color;
         this.isColliding = false;
+        this.speed = speed;
     }
 
     draw() {
@@ -13,12 +15,20 @@ class Bubble extends GameObject {
         this.context.fill();
     }
 
-    reset(x, y, speed) {
+    reset(x, y) {
         this.x = x;
         this.y = y;
-        this.vx = -speed;
-        this.vy = -speed;
         this.isColliding = false;
+    }
+
+    set speed(speed) {
+        let angle = Math.atan2(this.vy, this.vx);
+        this.vx = speed * Math.cos(angle);
+        this.vy = speed * Math.sin(angle);
+    }
+
+    get speed() {
+        return Math.sqrt(this.vx * this.vx + this.vy * this.vy);
     }
 
     stop() {
