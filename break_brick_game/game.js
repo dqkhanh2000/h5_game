@@ -5,20 +5,15 @@ window.onload = () => {
     "use strict";
 
     canvas = document.getElementById("canvas");
-    canvas.width = window.innerWidth * 0.7;
-    canvas.height = window.innerHeight * 0.7;
+    canvas.width = 900;
+    canvas.height = 620;
 
     gameWorld = new Game(canvas, 5, 5);
     window.gameWorld = gameWorld;
     window.requestAnimationFrame((timeStamp) => gameWorld.gameLoop(timeStamp));
 };
 
-const BRICK_COLOR = "#0095DD";
-const SLIDER_COLOR = "#0095DD";
-const BUBBLE_COLOR = "#0095DD";
-const UI_COLOR = "#0095DD";
-const MESSAGE_COLOR = "#0095DD";
-const UI_SCORE_SIZE = 30;
+const BRICK_COLORS = ["#38bdf8", "#34d399", "#fbbf24", "#fb7185", "#a78bfa"];
 const BUBBLE_SIZE = 10;
 const START_SPEED = 200;
 const SPEED_INCREMENT = 50;
@@ -30,8 +25,8 @@ class Game {
         this.context = canvas.getContext("2d");
 
         this.gameBoardWidth = this.canvas.width;
-        this.gameBoardHeight = this.canvas.height - UI_SCORE_SIZE;
-        this.ui = new GameUI(this.context, this.gameBoardWidth, this.gameBoardHeight);
+        this.gameBoardHeight = this.canvas.height;
+        this.ui = new GameUI(this.canvas);
         this.bubbleSize = bubbleSize;
 
         this.score = 0;
@@ -40,12 +35,15 @@ class Game {
         this.mouseDown = false;
         this.gameOver = false;
         this.run = false;
+        this.messageText = "";
+        this.buttonText = "";
         this.oldTimeStamp = 0;
 
         this.createActors();
         this.createBricks();
         this.listenForPlayerInput();
-        this.start();
+        this.draw();
+        this.showMessage("Ready?", "Start");
     }
 
     createActors() {
@@ -71,7 +69,8 @@ class Game {
     }
 
     createBricks() {
-        let margin = this.numColumn * 5;
+        let topPadding = 24;
+        let margin = 12;
         let brickWidth = this.gameBoardWidth / this.numColumn - margin;
         let brickHeight = (this.gameBoardHeight * 0.3) / this.numRow - this.numRow;
 
@@ -80,10 +79,11 @@ class Game {
         for (let row = 0; row < this.numRow; row++) {
             for (let column = 0; column < this.numColumn; column++) {
                 let x = margin / 2 + column * (brickWidth + margin);
-                let y = row * (brickHeight + this.numRow * 2);
+                let y = topPadding + row * (brickHeight + this.numRow * 2);
+                let color = BRICK_COLORS[row % BRICK_COLORS.length];
 
                 this.listBrick.push(
-                    new Brick(this.context, x, y, brickWidth, brickHeight)
+                    new Brick(this.context, x, y, brickWidth, brickHeight, color)
                 );
             }
         }
@@ -91,12 +91,21 @@ class Game {
 
     listenForPlayerInput() {
         window.addEventListener("touchmove", (event) => {
+            if (!this.run || this.gameOver) {
+                return;
+            }
+
             let touch = event.targetTouches[0];
-            this.slider.moveToCenter(touch.pageX, 0, this.maxSliderX());
+            this.slider.moveToCenter(this.canvasX(touch.clientX), 0, this.maxSliderX());
         });
 
-        window.addEventListener("mousedown", () => {
+        window.addEventListener("mousedown", (event) => {
+            if (!this.run || this.gameOver) {
+                return;
+            }
+
             this.mouseDown = true;
+            this.slider.moveToCenter(this.canvasX(event.clientX), 0, this.maxSliderX());
         });
 
         window.addEventListener("mouseup", () => {
@@ -110,7 +119,11 @@ class Game {
                 return;
             }
 
-            this.slider.moveBy(event.movementX, 0, this.maxSliderX());
+            if (!this.run || this.gameOver) {
+                return;
+            }
+
+            this.slider.moveToCenter(this.canvasX(event.clientX), 0, this.maxSliderX());
         });
     }
 
@@ -118,11 +131,16 @@ class Game {
         let secondsPassed = (timeStamp - this.oldTimeStamp) / 1000;
         this.oldTimeStamp = timeStamp;
 
-        if (this.gameOver) {
-            this.showMessage("Game OVER");
-        } else if (this.run) {
+        if (this.run) {
             this.update(secondsPassed);
-            this.draw();
+        }
+
+        this.draw();
+
+        if (this.gameOver) {
+            this.showMessage("Game Over", "Restart");
+        } else if (!this.run) {
+            this.showMessage("Ready?", "Start");
         }
 
         window.requestAnimationFrame((nextTimeStamp) => this.gameLoop(nextTimeStamp));
@@ -168,6 +186,7 @@ class Game {
 
         this.bubble.stop();
         this.gameOver = true;
+        this.run = false;
     }
 
     nextLevel() {
@@ -177,45 +196,80 @@ class Game {
 
         this.createBricks();
         this.bubble.reset(this.gameBoardWidth / 2, this.gameBoardHeight / 2);
-        this.start();
     }
 
     draw() {
         this.clear();
+        this.drawBackground();
         this.listBrick.forEach((brick) => brick.draw());
         this.bubble.draw();
         this.slider.draw();
-        this.ui.drawGameInfo(this.score, this.bubble.speed);
+        this.ui.updateGameInfo(this.score, this.bubble.speed);
     }
 
-    showMessage(text) {
-        this.clear();
-        this.ui.drawMessage(text);
+    showMessage(text, buttonText) {
+        if (this.messageText === text && this.buttonText === buttonText) {
+            return;
+        }
+
+        this.messageText = text;
+        this.buttonText = buttonText;
+        this.ui.showMessage(text);
+        this.ui.showButton(buttonText, () => {
+            if (this.gameOver) {
+                this.restart();
+                this.start();
+                return;
+            }
+
+            this.start();
+        });
     }
 
     start() {
-        let count = 3;
-        this.showMessage(`Start in ${count}...`);
+        this.run = true;
+        this.messageText = "";
+        this.buttonText = "";
+        this.ui.hideMessage();
+        this.oldTimeStamp = performance.now();
+    }
 
-        let interval = setInterval(() => {
-            count--;
+    restart() {
+        this.score = 0;
+        this.numRow = 5;
+        this.numColumn = 5;
+        this.gameOver = false;
+        this.run = false;
 
-            if (count >= 0) {
-                this.showMessage(`Start in ${count}s...`);
-            }
-            else {
-                clearInterval(interval);
-                this.run = true;
-                this.oldTimeStamp = performance.now();
-            }
-        }, 1000);
+        this.createActors();
+        this.createBricks();
     }
 
     clear() {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
+    drawBackground() {
+        this.context.fillStyle = "#111827";
+        this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        this.context.fillStyle = "rgba(125, 211, 252, 0.08)";
+        for (let x = 0; x < this.gameBoardWidth; x += 44) {
+            this.context.fillRect(x, 0, 1, this.gameBoardHeight);
+        }
+
+        for (let y = 0; y < this.gameBoardHeight; y += 44) {
+            this.context.fillRect(0, y, this.gameBoardWidth, 1);
+        }
+    }
+
     maxSliderX() {
         return this.gameBoardWidth - this.slider.width;
+    }
+
+    canvasX(clientX) {
+        let rect = this.canvas.getBoundingClientRect();
+        let scaleX = this.canvas.width / rect.width;
+        return (clientX - rect.left) * scaleX;
     }
 }

@@ -1,6 +1,14 @@
 class Slider extends Brick {
-    constructor(context, x, y, width, height, color = '#8BA0FF') {
+    constructor(context, x, y, width, height, color = "#c084fc") {
         super(context, x, y, width, height, color)
+    }
+
+    draw() {
+        this.context.save();
+        this.context.fillStyle = this.color;
+        this.context.beginPath();
+        this.context.roundRect(this.x, this.y, this.width, this.height, this.height / 2);
+        this.context.fill();
     }
 
     stop() {

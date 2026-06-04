@@ -1,40 +1,54 @@
 class GameUI {
-    constructor(context, width, gameBoardHeight) {
-        this.context = context;
-        this.width = width;
-        this.gameBoardHeight = gameBoardHeight;
+    constructor(canvas) {
+        this.stage = canvas.parentElement;
+
+        this.hud = document.createElement("div");
+        this.hud.className = "game-hud";
+
+        this.speedText = document.createElement("div");
+        this.speedText.className = "game-stat";
+
+        this.scoreText = document.createElement("div");
+        this.scoreText.className = "game-stat";
+
+        this.hud.appendChild(this.speedText);
+        this.hud.appendChild(this.scoreText);
+
+        this.panel = document.createElement("div");
+        this.panel.className = "game-panel hidden";
+
+        this.title = document.createElement("h1");
+        this.title.className = "game-title";
+
+        this.button = document.createElement("button");
+        this.button.className = "game-button";
+        this.button.type = "button";
+
+        this.panel.appendChild(this.title);
+        this.panel.appendChild(this.button);
+
+        this.stage.appendChild(this.hud);
+        this.stage.appendChild(this.panel);
     }
 
-    drawGameInfo(score, speed) {
-        let textSize = 12;
-        let y = this.gameBoardHeight + 2;
-
-        this.context.beginPath();
-        this.context.fillStyle = "#d8d8d8";
-        this.context.moveTo(0, y);
-        this.context.lineTo(this.width, y);
-        this.context.lineWidth = 0.3;
-        this.context.stroke();
-
-        this.context.textAlign = "left";
-        this.context.fillStyle = "#3F7CF6";
-        this.context.font = `${textSize}px Arial`;
-        this.context.fillText(`Speed: ${parseInt(speed)}`, 10, y + textSize + 5);
-        this.context.fillText(`Score: ${score}`, this.width - 65, y + textSize + 5);
+    updateGameInfo(score, speed) {
+        this.speedText.textContent = `Speed ${parseInt(speed)}`;
+        this.scoreText.textContent = `Score ${score}`;
     }
 
-    drawMessage(text) {
-        let x = this.width / 6;
-        let y = this.gameBoardHeight / 4;
-        let width = this.width * 0.67;
-        let height = this.gameBoardHeight * 0.6;
+    showButton(text, onClick) {
+        this.button.textContent = text;
+        this.button.onclick = onClick;
+        this.panel.classList.remove("hidden");
+    }
 
-        this.context.fillStyle = "#3AAFFD";
-        this.context.fillRect(x, y, width, height);
+    showMessage(text) {
+        this.title.textContent = text;
+        this.panel.classList.remove("hidden");
+    }
 
-        this.context.font = "20px Arial";
-        this.context.textAlign = "center";
-        this.context.fillStyle = "#ffffff";
-        this.context.fillText(text, x + width / 2, y + height / 2);
+    hideMessage() {
+        this.panel.classList.add("hidden");
+        this.button.onclick = null;
     }
 }

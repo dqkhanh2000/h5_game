@@ -1,6 +1,6 @@
 class Bubble extends GameObject {
 
-    constructor(context, x, y, speed, radius, color = "#2427EF") {
+    constructor(context, x, y, speed, radius, color = "#f8fafc") {
         super(context, x, y, 1, -1);
         this.radius = radius;
         this.color = color;
@@ -9,8 +9,11 @@ class Bubble extends GameObject {
     }
 
     draw() {
+        let glowColor = this.isColliding ? "rgba(251, 113, 133, 0.65)" : "rgba(125, 211, 252, 0.55)";
+
+        this.context.save();
         this.context.beginPath();
-        this.context.fillStyle = this.isColliding ? "#ff8080" : this.color;
+        this.context.fillStyle = this.isColliding ? "#fb7185" : this.color;
         this.context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
         this.context.fill();
     }

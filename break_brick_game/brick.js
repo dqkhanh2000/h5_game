@@ -1,5 +1,5 @@
 class Brick extends GameObject {
-    constructor(context, x, y, width, height, color = "#8FFF8B") {
+    constructor(context, x, y, width, height, color = "#38bdf8") {
         super(context, x, y);
         this.width = width;
         this.height = height;
@@ -7,8 +7,11 @@ class Brick extends GameObject {
     }
 
     draw() {
+        this.context.save();
         this.context.fillStyle = this.color;
-        this.context.fillRect(this.x, this.y, this.width, this.height);
+        this.context.beginPath();
+        this.context.roundRect(this.x, this.y, this.width, this.height, 6);
+        this.context.fill();
     }
 
     isTouchingBubble(bubble) {
